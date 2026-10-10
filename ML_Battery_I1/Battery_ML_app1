@@ -1,0 +1,23 @@
+from dataclasses import dataclass
+from os import path
+
+import pandas as pd
+
+path = 'git_my/Python_apps/data/archive'
+
+df_bm = pd.read_csv(path + '/battery_metadata.csv')
+df_obs = pd.read_csv(path + '/battery_observations.csv')
+
+@dataclass
+class BatteryMetadata:
+    battery_id: str
+    chemistry: str
+    manufacturer: str
+    climate_zone: str
+    nominal_capacity_kwh: float
+    usage_strategy: str
+    dataset_split: str
+
+# create a list of dataclass instances from the DataFrame
+battery_metadata_list = [BatteryMetadata(**row) for row in df_bm.to_dict(orient='records')]
+battery_metadata_list.display()
