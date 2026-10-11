@@ -13,24 +13,24 @@ class Task:
     # add task to the list
     def add_task(self):
         Task.task_list.append(self)
-    @staticmethod
-    def remove_task(title):
-        for task in Task.task_list:
+    @classmethod
+    def remove_task(cls, title):
+        for task in cls.task_list:
             if task.title == title:
-                Task.task_list.remove(task)
+                cls.task_list.remove(task)
                 break
-    @staticmethod
-    def display_tasks():
-        for task in Task.task_list:
+    @classmethod
+    def display_tasks(cls):
+        for task in cls.task_list:
             print(f'Title: {task.title}, Description: {task.description}, Due Date: {task.due_date}, Priority: {task.priority}')
         
-    @staticmethod
-    def create_task_from_input():
+    @classmethod
+    def create_task_from_input(cls):
         title = input("Enter title: ")
         description = input("Enter description: ")
         due_date = input("Enter due date (YYYY-MM-DD): ")
         priority = input("Enter priority (High/Medium/Low): ")
-        return Task(title, description, due_date, priority)
+        return cls(title, description, due_date, priority)
 
 
 def main():
