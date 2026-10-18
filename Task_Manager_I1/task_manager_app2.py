@@ -30,7 +30,7 @@ class Task:
         description = input("Enter description: ")
         due_date = input("Enter due date (YYYY-MM-DD): ")
         priority = input("Enter priority (High/Medium/Low): ")
-        return cls(title, description, due_date, priority)
+        return Task(title, description, due_date, priority)
 
 
 def main():
