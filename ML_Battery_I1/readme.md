@@ -79,6 +79,64 @@ When building models for this benchmark, track metrics such as:
 - classification accuracy, precision, recall, and F1 for degradation status,
 - generalization performance across climate zones or battery chemistries.
 
+## Current RUL Prediction Script
+
+`Battery_ML_app1` trains a regression model to predict `remaining_useful_cycles`
+for each battery observation. Run it from the project directory with:
+
+```shell
+python Battery_ML_app1
+```
+
+The script expects the CSV files under `data/archive/` and writes
+`predictions.csv` in the project directory.
+
+### What the script does
+
+1. Loads battery metadata, cycle observations, and the battery ID lists for
+   the train, validation, and test splits.
+2. Joins metadata to observations by `battery_id`, then selects rows for each
+   split using its corresponding ID list. Rows without a known target are
+   removed from training and validation, but retained in the test data so the
+   model can predict them.
+3. Uses these seven input features:
+   `state_of_health_pct`, `usage_strategy`, `climate_zone`, `cycle_index`,
+   `battery_age_days`, `internal_resistance_mOhm`, and `chemistry`. This feature
+   set performed better on the supplied validation split than the earlier
+   full-feature set in the experiments used for this update.
+4. Builds a preprocessing and modeling pipeline. Missing numeric values are
+   filled with the training median. Categorical values are filled with the
+   training most-frequent value and one-hot encoded. Unseen categories are
+   ignored during transformation rather than causing prediction to fail.
+5. Fits a `GradientBoostingRegressor` with 100 boosting stages, learning rate
+   `0.1`, maximum tree depth `5`, and random seed `42`.
+6. Evaluates the model on the separate validation batteries using mean squared
+   error (MSE) and mean absolute error (MAE). The script also reports
+   permutation importance: the increase in validation MAE when each feature
+   is shuffled. Higher positive values indicate the model relied more on that
+   feature for this validation set; they do not establish causation.
+7. After validation, fits the model again using labeled training and
+   validation observations together, then predicts every test observation.
+   The test split is not used to calculate the reported validation metrics.
+8. Saves each prediction with its `battery_id`, `cycle_index`, and `timestamp`
+   in `predictions.csv`. The prediction column is named
+   `predicted_remaining_useful_cycles`.
+
+### Interpreting and improving the results
+
+The validation score is useful for comparing model or feature-set choices,
+but the feature set was selected using this same validation split. Therefore,
+the printed validation metrics are tuning results and may be optimistic as an
+estimate of final performance. Keep the test split untouched until the model
+and features have been finalized, then evaluate it once if ground-truth test
+targets are available.
+
+Feature permutation importance measures predictive reliance, not causal
+impact. Features can share importance when they are correlated. Also confirm
+that every selected input, especially `state_of_health_pct`, is available at
+the time predictions will be made; otherwise the validation performance may
+not represent the intended real-world task.
+
 ---
 
 ## Summary
