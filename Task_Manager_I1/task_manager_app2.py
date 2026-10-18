@@ -9,27 +9,71 @@ class Task:
         self.description = description
         self.due_date = due_date
         self.priority = priority
+
     # add task to the list
     def add_task(self):
         Task.task_list.append(self)
-
-    def display_tasks(self):
-        for task in Task.task_list:
+    @classmethod
+    def remove_task(cls, title):
+        for task in cls.task_list:
+            if task.title == title:
+                cls.task_list.remove(task)
+                break
+    @classmethod
+    def display_tasks(cls):
+        for task in cls.task_list:
             print(f'Title: {task.title}, Description: {task.description}, Due Date: {task.due_date}, Priority: {task.priority}')
         
+    @classmethod
+    def create_task_from_input(cls):
+        title = input("Enter title: ")
+        description = input("Enter description: ")
+        due_date = input("Enter due date (YYYY-MM-DD): ")
+        priority = input("Enter priority (High/Medium/Low): ")
+        return Task(title, description, due_date, priority)
 
-x = Task('Task 1', 'Description of Task 1', '2023-12-31', 'High')
-x.add_task()
-y = Task('Task 2', 'Description of Task 2', '2023-12-30', 'Medium')
-y.add_task()
-z = Task('Task 3', 'Description of Task 3', '2023-12-29', 'Low')
-z.add_task()
-w = Task('Task 4', 'Description of Task 4', '2023-12-28', 'High')
-w.add_task()
-v = Task('Task 5', 'Description of Task 5', '2023-12-27', 'Medium')
-v.add_task()
-u = Task('Task 6', 'Description of Task 6', '2023-12-26', 'Low')
-u.add_task()
 
-x.display_tasks()
+def main():
+    # Read tasks from parquet file
+    try:
+        tasks_df = pd.read_parquet('tasks.parquet')
+
+        # Create tasks from DataFrame
+        for index, row in tasks_df.iterrows():
+            task = Task(row['Title'], row['Description'], row['Due Date'], row['Priority'])
+            task.add_task()
+
+        # Display all tasks
+        Task.display_tasks()
+
+    except FileNotFoundError:
+        print("No existing tasks found. Starting with an empty task list.")
+
+    while True:
+        print("1. Add task")
+        print("2. Display tasks")
+        print("3. Remove task")
+        print("4. Quit")
+        choice = input("Choose an option: ")
+
+        if choice == "1":
+            task = Task.create_task_from_input()
+            task.add_task()
+        elif choice == "2":
+            print("Current tasks:")
+            Task.display_tasks()
+        elif choice == "3":
+            title = input("Enter title of task to remove: ")
+            Task.remove_task(title)
+        elif choice == "4":
+            break
+        else:
+            print("Invalid choice. Please try again.")
+
+    
+    df = pd.DataFrame([(task.title, task.description, task.due_date, task.priority) for task in Task.task_list], columns=['Title', 'Description', 'Due Date', 'Priority'])
+    df.to_parquet('tasks.parquet', engine='pyarrow', compression='snappy')
+
+if __name__ == "__main__":
+    main()
 
